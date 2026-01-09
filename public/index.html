@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Downloader Server</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+        
+        .header h1 {
+            color: #fff;
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.95rem;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 30px;
+        }
+        
+        .status-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        .platforms {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+        
+        .platform-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .platform-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .platform-card.instagram {
+            border-color: rgba(225, 48, 108, 0.3);
+        }
+        
+        .platform-card.instagram:hover {
+            border-color: rgba(225, 48, 108, 0.6);
+        }
+        
+        .platform-card.tiktok {
+            border-color: rgba(0, 242, 234, 0.3);
+        }
+        
+        .platform-card.tiktok:hover {
+            border-color: rgba(0, 242, 234, 0.6);
+        }
+        
+        .platform-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+        
+        .platform-name {
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .platform-endpoint {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.8rem;
+            font-family: 'Consolas', monospace;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+        
+        .endpoints {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .endpoints h3 {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+        
+        .endpoint-list {
+            list-style: none;
+        }
+        
+        .endpoint-list li {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+            font-family: 'Consolas', monospace;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .endpoint-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .method {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        
+        .method.post { background: #2563eb; color: #fff; }
+        .method.get { background: #10b981; color: #fff; }
+
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>🚀 Media Downloader Server</h1>
+                <p>Unified API untuk Instagram & TikTok</p>
+            </div>
+            
+            <div style="text-align: center;">
+                <span class="status-badge">Server Aktif</span>
+            </div>
+            
+            <div class="platforms">
+                <div class="platform-card instagram">
+                    <div class="platform-icon">📸</div>
+                    <div class="platform-name">Instagram</div>
+                    <code class="platform-endpoint">/api/instagram</code>
+                </div>
+                <div class="platform-card tiktok">
+                    <div class="platform-icon">🎵</div>
+                    <div class="platform-name">TikTok</div>
+                    <code class="platform-endpoint">/api/tiktok</code>
+                </div>
+            </div>
+            
+            <div class="endpoints">
+                <h3>📡 Available Endpoints</h3>
+                <ul class="endpoint-list">
+                    <li><span class="method post">POST</span>/api/instagram/download</li>
+                    <li><span class="method post">POST</span>/api/tiktok/download</li>
+                    <li><span class="method post">POST</span>/api/*/set-cookies</li>
+                    <li><span class="method get">GET</span>/api/*/cookie-status</li>
+                    <li><span class="method get">GET</span>/api/*/proxy</li>
+                    <li><span class="method post">POST</span>/api/*/save</li>
+                </ul>
+            </div>
+            
+            <div class="footer">
+                Running on http://localhost:3000
+            </div>
+        </div>
+    </div>
+</body>
+</html>

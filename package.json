@@ -1,0 +1,32 @@
+{
+  "name": "unified-media-downloader",
+  "version": "1.0.0",
+  "description": "Unified server for Instagram and TikTok media downloader",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "instagram",
+    "tiktok",
+    "downloader",
+    "puppeteer",
+    "media"
+  ],
+  "author": "ArisaAkiyama",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.2",
+    "puppeteer": "^24.34.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.5",
+    "pkg": "^5.8.1"
+  }
+}
