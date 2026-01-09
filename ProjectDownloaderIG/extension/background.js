@@ -1,0 +1,268 @@
+/**
+ * InstaDown - Background Service Worker
+ * Handles downloads in background so popup closing doesn't interrupt
+ */
+
+// Default server URL - will be updated from settings
+let serverUrl = 'http://localhost:3000';
+
+// Store current download state
+let downloadState = {
+    isProcessing: false,
+    url: null,
+    media: null,
+    username: null,
+    error: null,
+    progress: 0,         // Current progress (0-100)
+    progressStatus: '',  // Status text
+    progressDetail: ''   // Detail text
+};
+
+/**
+ * Get server URL from settings
+ */
+async function getServerUrl() {
+    try {
+        const result = await chrome.storage.sync.get('settings');
+        if (result.settings?.serverUrl) {
+            serverUrl = result.settings.serverUrl;
+        }
+    } catch (e) {
+        console.log('[Background] Using default server URL');
+    }
+    return serverUrl;
+}
+
+// Listen for messages from popup
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log('[Background] Received message:', request.action);
+
+    if (request.action === 'startDownload') {
+        handleDownload(request.url);
+        sendResponse({ started: true });
+        return true;
+    }
+
+    if (request.action === 'getState') {
+        sendResponse(downloadState);
+        return true;
+    }
+
+    if (request.action === 'clearState') {
+        downloadState = {
+            isProcessing: false,
+            url: null,
+            media: null,
+            username: null,
+            error: null,
+            progress: 0,
+            progressStatus: '',
+            progressDetail: ''
+        };
+        // Clear badge when starting new download
+        chrome.action.setBadgeText({ text: '' });
+        chrome.storage.local.remove(['downloadState']);
+        sendResponse({ cleared: true });
+        return true;
+    }
+
+    // Update progress from popup (for story capture)
+    if (request.action === 'updateProgress') {
+        downloadState.isProcessing = true;
+        downloadState.url = request.url || downloadState.url;
+        downloadState.progress = request.progress || downloadState.progress;
+        downloadState.progressStatus = request.status || downloadState.progressStatus;
+        downloadState.progressDetail = request.detail || downloadState.progressDetail;
+        // Persist to storage
+        chrome.storage.local.set({ downloadState });
+        sendResponse({ updated: true });
+        return true;
+    }
+
+    // Complete download with results (for story capture)
+    if (request.action === 'completeDownload') {
+        downloadState = {
+            isProcessing: false,
+            url: request.url,
+            media: request.media,
+            username: request.username,
+            error: request.error || null,
+            progress: 100,
+            progressStatus: 'Selesai!',
+            progressDetail: `${request.media?.length || 0} media ditemukan`
+        };
+        // Persist to storage
+        chrome.storage.local.set({ downloadState });
+        // Show badge
+        if (request.media?.length > 0) {
+            chrome.action.setBadgeText({ text: String(request.media.length) });
+            chrome.action.setBadgeBackgroundColor({ color: '#FF3B30' });
+        }
+        sendResponse({ completed: true });
+        return true;
+    }
+
+    if (request.action === 'saveMedia') {
+        handleSaveMedia(request.items, request.username);
+        sendResponse({ started: true });
+        return true;
+    }
+});
+
+/**
+ * Handle download request - runs in background
+ */
+async function handleDownload(url) {
+    console.log('[Background] Starting download for:', url);
+
+    // Get server URL from settings
+    const baseUrl = await getServerUrl();
+    const API_URL = `${baseUrl}/api/instagram/download`;
+
+    downloadState = {
+        isProcessing: true,
+        url: url,
+        media: null,
+        username: null,
+        error: null
+    };
+
+    // Persist state
+    await chrome.storage.local.set({ downloadState });
+
+    try {
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.media?.length > 0) {
+            downloadState = {
+                isProcessing: false,
+                url: url,
+                media: data.media,
+                username: data.username || 'unknown',
+                error: null
+            };
+            console.log('[Background] Download complete:', data.media.length, 'items');
+
+            // Show red badge with count
+            chrome.action.setBadgeText({ text: String(data.media.length) });
+            chrome.action.setBadgeBackgroundColor({ color: '#FF3B30' });
+        } else {
+            downloadState = {
+                isProcessing: false,
+                url: url,
+                media: null,
+                username: null,
+                error: data.error || 'Failed to extract media'
+            };
+            console.log('[Background] Download failed:', downloadState.error);
+        }
+
+    } catch (error) {
+        console.error('[Background] Download error:', error);
+        downloadState = {
+            isProcessing: false,
+            url: url,
+            media: null,
+            username: null,
+            error: 'Server tidak terkoneksi. Pastikan server berjalan.'
+        };
+    }
+
+    // Persist final state
+    await chrome.storage.local.set({ downloadState });
+}
+
+/**
+ * Handle saving multiple media files
+ */
+async function handleSaveMedia(items, username) {
+    console.log('[Background] Saving', items.length, 'items for', username);
+
+    // Get server URL from settings
+    const baseUrl = await getServerUrl();
+    const SAVE_URL = `${baseUrl}/api/instagram/save`;
+
+    let savedCount = 0;
+    let errors = [];
+
+    for (const item of items) {
+        try {
+            const response = await fetch(SAVE_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    url: item.url,
+                    filename: item.filename,
+                    type: item.type,
+                    username: username
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                savedCount++;
+            } else {
+                errors.push(item.filename);
+            }
+        } catch (error) {
+            errors.push(item.filename);
+        }
+    }
+
+    console.log('[Background] Saved', savedCount, 'of', items.length);
+
+    // Update state with save results
+    await chrome.storage.local.set({
+        lastSaveResult: {
+            total: items.length,
+            saved: savedCount,
+            errors: errors.length
+        }
+    });
+}
+
+// Restore state on startup
+chrome.runtime.onStartup.addListener(async () => {
+    const data = await chrome.storage.local.get('downloadState');
+    if (data.downloadState) {
+        downloadState = data.downloadState;
+        console.log('[Background] Restored state:', downloadState);
+    }
+});
+
+/**
+ * Clear badge and reset state when Instagram tab is refreshed
+ */
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    // Only act when page starts loading (refresh/navigation)
+    if (changeInfo.status === 'loading') {
+        // Check if it's an Instagram page
+        if (tab.url && (tab.url.includes('instagram.com'))) {
+            console.log('[Background] Instagram page refreshed - clearing state');
+
+            // Clear badge
+            chrome.action.setBadgeText({ text: '' });
+
+            // Reset download state
+            downloadState = {
+                isProcessing: false,
+                url: null,
+                media: null,
+                username: null,
+                error: null
+            };
+
+            // Clear stored state
+            chrome.storage.local.remove(['lastUrl', 'lastMedia', 'lastUsername', 'downloadState']);
+        }
+    }
+});
+
+console.log('[Background] Service worker started');
+

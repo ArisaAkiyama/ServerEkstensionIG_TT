@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TikDown Settings</title>
+    <link rel="stylesheet" href="settings.css">
+</head>
+
+<body>
+    <div class="container settings-container">
+        <!-- Header -->
+        <header class="header">
+            <button id="backBtn" class="back-btn" title="Back">&larr;</button>
+            <div class="logo">
+                <svg viewBox="0 0 24 24" fill="none" width="24" height="24">
+                    <path d="M9 12a4 4 0 1 0 4 4V4c1.5 2 4 3 6 3" stroke="white" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                <span>Settings</span>
+            </div>
+        </header>
+
+        <div class="settings-content">
+
+            <!-- Download Settings -->
+            <section class="settings-section">
+                <h3 class="section-title">Download</h3>
+
+                <div class="setting-item column">
+                    <label for="downloadPath">Lokasi Penyimpanan</label>
+                    <input type="text" id="downloadPath" class="setting-input" placeholder="Kosongkan untuk default">
+                    <p class="setting-desc">Contoh: D:\TikTok atau C:\Downloads\TT (kosongkan untuk default)</p>
+                </div>
+            </section>
+
+            <!-- TikTok Login -->
+            <section class="settings-section">
+                <h3 class="section-title">Akun TikTok</h3>
+
+                <div class="setting-item column">
+                    <div class="login-status" id="loginStatus">
+                        <span class="status-icon" id="statusIcon"></span>
+                        <span class="status-text" id="statusText">Checking...</span>
+                    </div>
+                    <p class="setting-desc">Cookies otomatis di-sync saat mengunjungi TikTok.com</p>
+                </div>
+            </section>
+
+            <!-- Server Status -->
+            <section class="settings-section">
+                <h3 class="section-title">Server Status</h3>
+
+                <div class="setting-item column">
+                    <div id="serverStatus" class="server-status">
+                        <div class="status-indicator checking"></div>
+                        <span class="server-status-text">Checking...</span>
+                    </div>
+                    <button id="checkStatusBtn" class="action-btn" style="margin-top: 8px;">Check Connection</button>
+                </div>
+            </section>
+
+            <!-- Actions -->
+            <section class="settings-section">
+                <h3 class="section-title">Aksi</h3>
+
+                <div class="setting-actions">
+                    <button id="clearCacheBtn" class="action-btn">Hapus Cache</button>
+                    <button id="resetBtn" class="action-btn danger">Reset Default</button>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- Save Button -->
+        <div class="settings-footer">
+            <button id="saveBtn" class="save-btn">Simpan Pengaturan</button>
+        </div>
+
+        <!-- Toast -->
+        <div id="toast" class="toast hidden">
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <script src="settings.js"></script>
+</body>
+
+</html>
